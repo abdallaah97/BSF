@@ -1,0 +1,16 @@
+﻿using Domain.Entittes;
+using Domain.Enums;
+
+namespace Application.Services.AuthService.DTOs
+{
+    public class LoginResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string PhonNumber { get; set; }
+        public SytemRole RoleCode { get; set; }
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
+    }
+}
