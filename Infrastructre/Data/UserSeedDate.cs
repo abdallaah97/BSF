@@ -18,9 +18,9 @@ namespace Infrastructre.Data
             {
                var roles = new List<Role>
                 {
-                    new Role { Name = "Admin", Code = SytemRole.Admin },
-                    new Role { Name = "ServiceProvider", Code = SytemRole.ServiceProvider },
-                    new Role { Name = "User", Code = SytemRole.User }
+                    new Role { Name = SytemRole.Admin.ToString(), Code = SytemRole.Admin },
+                    new Role { Name = SytemRole.ServiceProvider.ToString(), Code = SytemRole.ServiceProvider },
+                    new Role { Name = SytemRole.User.ToString(), Code = SytemRole.User }
                 };
                 context.Roles.AddRange(roles);
                 context.SaveChanges();

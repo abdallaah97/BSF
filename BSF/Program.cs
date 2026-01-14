@@ -1,6 +1,9 @@
 using Application.Repositories;
 using Application.Services.AuthService;
+using Application.Services.ClientUserService;
 using Application.Services.CurrentUserService;
+using Application.Services.LookupService;
+using Application.Services.ServiceProviderService;
 using Infrastructre.Context;
 using Infrastructre.Data;
 using Infrastructre.Repositories;
@@ -75,6 +78,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IAuthService), typeof(AuthService));
 builder.Services.AddScoped(typeof(ICurrentUserService), typeof(CurrentUserService));
+builder.Services.AddScoped(typeof(IServiceProviderService), typeof(ServiceProviderService));
+builder.Services.AddScoped(typeof(IClientUserService), typeof(ClientUserService));
+builder.Services.AddScoped(typeof(ILookupService), typeof(LookupService));
 
 var app = builder.Build();
 
