@@ -54,7 +54,7 @@ namespace Application.Services.AuthService
                 ExpiryDate = DateTime.UtcNow.AddDays(7)
             };
 
-            await _refershTokenRepository.AddAsync(refershToken);
+            await _refershTokenRepository.InsertAsync(refershToken);
             await _refershTokenRepository.SaveChangesAsync();
 
 
