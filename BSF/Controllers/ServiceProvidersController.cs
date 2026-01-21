@@ -1,6 +1,5 @@
 ﻿using Application.Services.ServiceProviderService;
 using Application.Services.ServiceProviderService.DTOs;
-using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,6 +29,14 @@ namespace BSF.Controllers
         {
             var response = await _serviceProviderService.GetServiceProviderAccount();
             return Ok(response);
+        }
+
+        [Authorize(Roles = "ServiceProvider")]
+        [HttpPost("UpdateServiceProviderAccount")]
+        public async Task<IActionResult> UpdateServiceProviderAccount([FromForm] ServiceProviderRegistrationRequest request)
+        {
+            await _serviceProviderService.UpdateServiceProviderAccount(request);
+            return Ok();
         }
     }
 }

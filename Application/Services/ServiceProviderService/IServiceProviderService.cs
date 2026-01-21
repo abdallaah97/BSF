@@ -1,4 +1,5 @@
-﻿using Application.Services.ServiceProviderService.DTOs;
+﻿using Application.Services.ClientUserService.DTOs;
+using Application.Services.ServiceProviderService.DTOs;
 
 namespace Application.Services.ServiceProviderService
 {
@@ -6,5 +7,6 @@ namespace Application.Services.ServiceProviderService
     {
         Task ServiceProviderRegistration(ServiceProviderRegistrationRequest request);
         Task<GetServiceProviderAccountResponse> GetServiceProviderAccount();
+        Task UpdateServiceProviderAccount(ServiceProviderRegistrationRequest request);
     }
 }

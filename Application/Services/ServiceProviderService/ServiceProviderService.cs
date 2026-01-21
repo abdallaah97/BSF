@@ -41,7 +41,8 @@ namespace Application.Services.ServiceProviderService
                 Name = serviceProvider.User.Name,
                 Email = serviceProvider.User.Email,
                 PhoneNumber = serviceProvider.User.PhonNumber,
-                ServiceCategoryId = serviceProvider.ServiceCategoryId
+                ServiceCategoryId = serviceProvider.ServiceCategoryId,
+                IsAvailable = serviceProvider.IsAvailable,
             };
 
             return response;
@@ -70,26 +71,78 @@ namespace Application.Services.ServiceProviderService
             var serviceProvider = new ServiceProvider
             {
                 UserId = user.Id,
-                ServiceCategoryId = request.ServiceCategoryId
+                ServiceCategoryId = request.ServiceCategoryId,
+                IsAvailable = false
             };
 
             await _serviceProviderRepo.InsertAsync(serviceProvider);
             await _serviceProviderRepo.SaveChangesAsync();
         }
 
-        private async Task RegistrationValidation(ServiceProviderRegistrationRequest request)
+        public async Task UpdateServiceProviderAccount(ServiceProviderRegistrationRequest request)
         {
-            var isEmailExist = await _userRepo.GetAll().AnyAsync(x => x.Email == request.Email);
-            if (isEmailExist)
+            var userId = _currentUserService.UserId;
+
+            await RegistrationValidation(request, userId.Value);
+
+            var user = await _userRepo.GetByIdAsync(userId.Value);
+            var serviceProvider = await _serviceProviderRepo.GetAll().FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (user == null)
             {
-                throw new Exception("Email already exists");
+                throw new Exception("User not found");
+            }
+            if (serviceProvider == null)
+            {
+                throw new Exception("Service provider user not found");
             }
 
-            var isPhoneNumberExist = await _userRepo.GetAll().AnyAsync(x => x.PhonNumber == request.PhonNumber);
-            if (isPhoneNumberExist)
+            user.Name = request.Name;
+            user.Email = request.Email;
+            user.PhonNumber = request.PhonNumber;
+
+            _userRepo.Update(user);
+            await _userRepo.SaveChangesAsync();
+
+            serviceProvider.ServiceCategoryId = request.ServiceCategoryId;
+            serviceProvider.IsAvailable = request.IsAvailable;
+            _serviceProviderRepo.Update(serviceProvider);
+            await _serviceProviderRepo.SaveChangesAsync();
+
+        }
+
+
+        private async Task RegistrationValidation(ServiceProviderRegistrationRequest request, int? userId = null)
+        {
+            if (userId == null)
             {
-                throw new Exception("Phone number already exists");
+                var isEmailExist = await _userRepo.GetAll().AnyAsync(x => x.Email == request.Email);
+                if (isEmailExist)
+                {
+                    throw new Exception("Email already exists");
+                }
+
+                var isPhoneNumberExist = await _userRepo.GetAll().AnyAsync(x => x.PhonNumber == request.PhonNumber);
+                if (isPhoneNumberExist)
+                {
+                    throw new Exception("Phone number already exists");
+                }
             }
+            else
+            {
+                var isEmailExist = await _userRepo.GetAll().AnyAsync(x => x.Email == request.Email && x.Id != userId);
+                if (isEmailExist)
+                {
+                    throw new Exception("Email already exists");
+                }
+
+                var isPhoneNumberExist = await _userRepo.GetAll().AnyAsync(x => x.PhonNumber == request.PhonNumber && x.Id != userId);
+                if (isPhoneNumberExist)
+                {
+                    throw new Exception("Phone number already exists");
+                }
+            }
+
         }
     }
 }

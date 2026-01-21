@@ -3,6 +3,7 @@ using Application.Services.AuthService;
 using Application.Services.ClientUserService;
 using Application.Services.CurrentUserService;
 using Application.Services.LookupService;
+using Application.Services.Service;
 using Application.Services.ServiceProviderService;
 using Infrastructre.Context;
 using Infrastructre.Data;
@@ -81,6 +82,7 @@ builder.Services.AddScoped(typeof(ICurrentUserService), typeof(CurrentUserServic
 builder.Services.AddScoped(typeof(IServiceProviderService), typeof(ServiceProviderService));
 builder.Services.AddScoped(typeof(IClientUserService), typeof(ClientUserService));
 builder.Services.AddScoped(typeof(ILookupService), typeof(LookupService));
+builder.Services.AddScoped(typeof(IServicesService), typeof(ServicesService));
 
 var app = builder.Build();
 

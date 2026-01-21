@@ -7,5 +7,6 @@
         public string PhonNumber { get; set; }
         public string Password { get; set; }
         public int ServiceCategoryId { get; set; }
+        public bool IsAvailable { get; set; }
     }
 }

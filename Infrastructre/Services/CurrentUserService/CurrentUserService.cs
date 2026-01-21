@@ -20,6 +20,21 @@ namespace Infrastructre.Services.CurrentUserService
             }
         }
 
+        public int? ServiceProviderId
+        {
+            get
+            {
+                return Convert.ToInt32(_httpContextAccessor.HttpContext?.User.FindFirst("ServiceProviderId")?.Value);
+            }
+        }
+        public int? ClientUserId
+        {
+            get
+            {
+                return Convert.ToInt32(_httpContextAccessor.HttpContext?.User.FindFirst("ClientUserId")?.Value);
+            }
+        }
+
         public string? Name
         {
             get

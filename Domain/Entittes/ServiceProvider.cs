@@ -7,7 +7,6 @@
         public ServiceCategory ServiceCategory { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
-        public DateTime? AvailableFrom { get; set; }
-        public DateTime? AvailableTo { get; set; }
+        public bool IsAvailable { get; set; }
     }
 }

@@ -18,13 +18,17 @@ namespace Application.Services.AuthService
         private readonly IConfiguration _config;
         private readonly ICurrentUserService _currentUserService;
         private readonly IGenericRepository<User> _userRepository;
+        private readonly IGenericRepository<ServiceProvider> _serviceProviderRepository;
+        private readonly IGenericRepository<ClientUser> _clientUserRepository;
         private readonly IGenericRepository<RefershToken> _refershTokenRepository;
-        public AuthService(IGenericRepository<User> userRepository, IGenericRepository<RefershToken> refershTokenRepository, IConfiguration config, ICurrentUserService currentUserService)
+        public AuthService(IGenericRepository<User> userRepository, IGenericRepository<RefershToken> refershTokenRepository, IConfiguration config, ICurrentUserService currentUserService, IGenericRepository<ServiceProvider> serviceProviderRepository, IGenericRepository<ClientUser> clientUserRepository)
         {
             _userRepository = userRepository;
             _refershTokenRepository = refershTokenRepository;
             _config = config;
             _currentUserService = currentUserService;
+            _serviceProviderRepository = serviceProviderRepository;
+            _clientUserRepository = clientUserRepository;
         }
 
         public async Task<LoginResponse> Login(LoginRequest request)
@@ -65,7 +69,7 @@ namespace Application.Services.AuthService
                 Email = user.Email,
                 PhonNumber = user.PhonNumber,
                 RoleCode = user.Role.Code,
-                AccessToken = GenerateAccessToken(user),
+                AccessToken = await GenerateAccessToken(user),
                 RefreshToken = refershToken.Token,
             };
 
@@ -86,7 +90,7 @@ namespace Application.Services.AuthService
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == token.UserId);
 
-            return GenerateAccessToken(user);
+            return await GenerateAccessToken(user);
         }
 
         public async Task ChangeMyPassword(ChangeMyPasswordRequest request)
@@ -109,7 +113,7 @@ namespace Application.Services.AuthService
             user.Password = passwordHasher.HashPassword(user, request.NewPassword);
         }
 
-        private string GenerateAccessToken(User user)
+        private async Task<string> GenerateAccessToken(User user)
         {
             var jwtSection = _config.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]));
@@ -122,6 +126,20 @@ namespace Application.Services.AuthService
                 new Claim(ClaimTypes.MobilePhone, user.PhonNumber),
                 new Claim(ClaimTypes.Role, user.Role.Name),
             };
+
+            var serviceProviderUser = await _serviceProviderRepository.GetAll().FirstOrDefaultAsync(x => x.UserId == user.Id);
+            if (serviceProviderUser != null)
+            {
+                claims.Add(new Claim("ServiceProviderId", serviceProviderUser.Id.ToString()));
+            }
+            else
+            {
+                var clientUser = await _clientUserRepository.GetAll().FirstOrDefaultAsync(x => x.UserId == user.Id);
+                if (clientUser != null)
+                {
+                    claims.Add(new Claim("clientUserId", clientUser.Id.ToString()));
+                }
+            }
 
 
             var tokenDescriptor = new SecurityTokenDescriptor
