@@ -92,6 +92,7 @@ namespace Application.Services.ChatService
                     SenderId = x.SenderId,
                     ReciverId = x.ReciverId,
                     Message = x.Message,
+                    CreatedDate = x.CreatedDate
                 }).ToListAsync();
 
             return messages;

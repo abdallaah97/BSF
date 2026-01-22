@@ -6,5 +6,6 @@
         public string Message { get; set; }
         public int SenderId { get; set; }
         public int ReciverId { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }
