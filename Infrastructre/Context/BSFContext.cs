@@ -45,5 +45,8 @@ namespace Infrastructre.Context
         public DbSet<ServiceCategory> ServiceCategories { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
     }
 }

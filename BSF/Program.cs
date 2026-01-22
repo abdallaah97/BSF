@@ -1,8 +1,10 @@
 using Application.Repositories;
 using Application.Services.AuthService;
+using Application.Services.ChatService;
 using Application.Services.ClientUserService;
 using Application.Services.CurrentUserService;
 using Application.Services.LookupService;
+using Application.Services.NotificationService;
 using Application.Services.Service;
 using Application.Services.ServiceProviderService;
 using Infrastructre.Context;
@@ -83,6 +85,8 @@ builder.Services.AddScoped(typeof(IServiceProviderService), typeof(ServiceProvid
 builder.Services.AddScoped(typeof(IClientUserService), typeof(ClientUserService));
 builder.Services.AddScoped(typeof(ILookupService), typeof(LookupService));
 builder.Services.AddScoped(typeof(IServicesService), typeof(ServicesService));
+builder.Services.AddScoped(typeof(INotificationService), typeof(NotificationService));
+builder.Services.AddScoped(typeof(IChatService), typeof(ChatService));
 
 var app = builder.Build();
 
