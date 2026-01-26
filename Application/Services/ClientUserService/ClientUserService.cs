@@ -1,6 +1,7 @@
 ﻿using Application.Repositories;
 using Application.Services.ClientUserService.DTOs;
 using Application.Services.CurrentUserService;
+using Application.Services.FileService;
 using Domain.Entittes;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -14,12 +15,14 @@ namespace Application.Services.ClientUserService
         private readonly IGenericRepository<User> _userRepo;
         private readonly IGenericRepository<Role> _roleRepo;
         private readonly ICurrentUserService _currentUserService;
-        public ClientUserService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, IGenericRepository<ClientUser> clientUserRepo, ICurrentUserService currentUserService)
+        private readonly IFileService _fileService;
+        public ClientUserService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, IGenericRepository<ClientUser> clientUserRepo, ICurrentUserService currentUserService, IFileService fileService)
         {
             _clientUserRepo = clientUserRepo;
             _userRepo = userRepo;
             _roleRepo = roleRepo;
             _currentUserService = currentUserService;
+            _fileService = fileService;
         }
 
         public async Task ClientUserRegistration(ClientUserRegistrationRequest request)
@@ -71,13 +74,14 @@ namespace Application.Services.ClientUserService
                 Name = clientUser.User.Name,
                 Email = clientUser.User.Email,
                 PhonNumber = clientUser.User.PhonNumber,
-                BirthDate = clientUser.BarthDate
+                BirthDate = clientUser.BarthDate,
+                PersonalPhoto = clientUser.User.PersonalPhoto
             };
 
             return response;
         }
 
-        public async Task UpdateClientUserAccount(ClientUserRegistrationRequest request)
+        public async Task UpdateClientUserAccount(UpdateClientUserRequest request)
         {
             var userId = _currentUserService.UserId;
 
@@ -98,6 +102,18 @@ namespace Application.Services.ClientUserService
             user.Name = request.Name;
             user.Email = request.Email;
             user.PhonNumber = request.PhonNumber;
+
+            if (request.DeletePhoto)
+            {
+                _fileService.DeleteFile(user.PersonalPhoto);
+                user.PersonalPhoto = null;
+            }
+
+            if (request.PersonalPhoto != null)
+            {
+                _fileService.DeleteFile(user.PersonalPhoto);
+                user.PersonalPhoto = await _fileService.SaveFileAsync(request.PersonalPhoto, "Users");
+            }
 
             _userRepo.Update(user);
             await _userRepo.SaveChangesAsync();

@@ -8,6 +8,7 @@
         public string PhoneNumber { get; set; }
         public int ServiceCategoryId { get; set; }
         public bool IsAvailable { get; set; }
+        public string? PersonalPhoto { get; set; }
 
     }
 }

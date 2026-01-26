@@ -33,7 +33,7 @@ namespace BSF.Controllers
 
         [Authorize(Roles = "ServiceProvider")]
         [HttpPost("UpdateServiceProviderAccount")]
-        public async Task<IActionResult> UpdateServiceProviderAccount([FromForm] ServiceProviderRegistrationRequest request)
+        public async Task<IActionResult> UpdateServiceProviderAccount([FromForm] UpdateServiceProviderRequest request)
         {
             await _serviceProviderService.UpdateServiceProviderAccount(request);
             return Ok();

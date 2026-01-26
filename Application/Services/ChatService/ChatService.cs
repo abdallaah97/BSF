@@ -1,7 +1,10 @@
-﻿using Application.Repositories;
+﻿using Application.Hubs;
+using Application.Managers.Chat;
+using Application.Repositories;
 using Application.Services.ChatService.DTOs;
 using Application.Services.CurrentUserService;
 using Domain.Entittes;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.ChatService
@@ -11,11 +14,15 @@ namespace Application.Services.ChatService
         private readonly IGenericRepository<Chat> _chatRepo;
         private readonly IGenericRepository<ChatMessage> _chatMessageRepo;
         private readonly ICurrentUserService _currentUserService;
-        public ChatService(IGenericRepository<Chat> chatRepo, IGenericRepository<ChatMessage> chatMessageRepo, ICurrentUserService currentUserService)
+        private readonly IChatConnectionManager _chatConnectionManager;
+        private readonly IHubContext<ChatHub> _chatHubContext;
+        public ChatService(IGenericRepository<Chat> chatRepo, IGenericRepository<ChatMessage> chatMessageRepo, ICurrentUserService currentUserService, IHubContext<ChatHub> chatHubContext, IChatConnectionManager chatConnectionManager)
         {
             _chatRepo = chatRepo;
             _chatMessageRepo = chatMessageRepo;
             _currentUserService = currentUserService;
+            _chatHubContext = chatHubContext;
+            _chatConnectionManager = chatConnectionManager;
         }
 
         public async Task SendChatMessage(SendChatMessageRequest request)
@@ -53,6 +60,12 @@ namespace Application.Services.ChatService
                 CreatedDate = DateTime.UtcNow,
                 Message = request.Message,
             };
+
+            if (_chatConnectionManager.TryGet(message.ReciverId.ToString(), out string connectionId))
+            {
+                await _chatHubContext.Clients.Client(connectionId)
+                    .SendAsync("newMessage", message);
+            }
 
             await _chatMessageRepo.InsertAsync(message);
             await _chatMessageRepo.SaveChangesAsync();
@@ -92,6 +105,7 @@ namespace Application.Services.ChatService
                     SenderId = x.SenderId,
                     ReciverId = x.ReciverId,
                     Message = x.Message,
+                    IsRead = x.IsRead,
                     CreatedDate = x.CreatedDate
                 }).ToListAsync();
 

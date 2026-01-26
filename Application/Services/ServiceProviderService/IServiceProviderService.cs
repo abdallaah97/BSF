@@ -7,6 +7,6 @@ namespace Application.Services.ServiceProviderService
     {
         Task ServiceProviderRegistration(ServiceProviderRegistrationRequest request);
         Task<GetServiceProviderAccountResponse> GetServiceProviderAccount();
-        Task UpdateServiceProviderAccount(ServiceProviderRegistrationRequest request);
+        Task UpdateServiceProviderAccount(UpdateServiceProviderRequest request);
     }
 }

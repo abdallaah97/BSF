@@ -31,7 +31,7 @@ namespace Infrastructre.Services.CurrentUserService
         {
             get
             {
-                return Convert.ToInt32(_httpContextAccessor.HttpContext?.User.FindFirst("ClientUserId")?.Value);
+                return Convert.ToInt32(_httpContextAccessor.HttpContext?.User.FindFirst("clientUserId")?.Value);
             }
         }
 

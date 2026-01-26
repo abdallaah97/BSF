@@ -1,5 +1,9 @@
-﻿using Application.Repositories;
+﻿using Application.Generic_DTOs;
+using Application.Repositories;
+using Application.Services.ClientUserService.DTOs;
 using Application.Services.CurrentUserService;
+using Application.Services.NotificationService;
+using Application.Services.NotificationService.DTOs;
 using Application.Services.OrderService.DTOs;
 using Domain.Entittes;
 using Domain.Enums;
@@ -12,16 +16,21 @@ namespace Application.Services.OrderService
         private readonly IGenericRepository<Order> _orderRepo;
         private readonly IGenericRepository<Domain.Entittes.Service> _serviceRepo;
         private readonly ICurrentUserService _currentUserService;
-        public OrderService(IGenericRepository<Order> orderRepo, IGenericRepository<Domain.Entittes.Service> serviceRepo, ICurrentUserService currentUserService)
+        private readonly INotificationService _notificationService;
+        public OrderService(IGenericRepository<Order> orderRepo, IGenericRepository<Domain.Entittes.Service> serviceRepo, ICurrentUserService currentUserService, INotificationService notificationService)
         {
             _orderRepo = orderRepo;
             _serviceRepo = serviceRepo;
             _currentUserService = currentUserService;
+            _notificationService = notificationService;
         }
 
         public async Task RequestOrder(SaveOrderRequest request)
         {
-            var service = await _serviceRepo.GetAll().Include(x => x.ServiceProvider).FirstOrDefaultAsync(x => x.Id == request.ServiceId);
+            var service = await _serviceRepo.GetAll()
+                .Include(x => x.ServiceProvider)
+                .FirstOrDefaultAsync(x => x.Id == request.ServiceId);
+
             if (!service.ServiceProvider.IsAvailable)
             {
                 throw new Exception("Servie Provider not available");
@@ -58,16 +67,40 @@ namespace Application.Services.OrderService
 
             await _orderRepo.InsertAsync(order);
             await _orderRepo.SaveChangesAsync();
+
+            //Send notification to service provider
+            await _notificationService.SendNotification(new CreateNotificationRequest
+            {
+                UserId = service.ServiceProvider.UserId,
+                Title = "New Order Request",
+                Message = $"You have a new order request for service {service.Name}.",
+                Data = new Dictionary<string, string>
+                {
+                    { "{ServiceName}", service.Name },
+                }
+            });
         }
 
-        public async Task<List<GetOrderResponse>> GetClientUserOrders()
+        public async Task<PaginationResponse<GetOrderResponse>> GetClientUserOrders(GetClientUserOrderRequest request)
         {
-            var query = await _orderRepo.GetAll()
+            var query = _orderRepo.GetAll()
                 .OrderByDescending(x => x.CreatedTime)
-                .Where(x => x.ClientUserId == _currentUserService.ClientUserId.Value)
                 .Include(x => x.Service)
                 .ThenInclude(x => x.ServiceProvider)
                 .ThenInclude(x => x.User)
+                .Where(x => x.ClientUserId == _currentUserService.ClientUserId.Value);
+
+            if (!string.IsNullOrEmpty(request.ServiceName))
+            {
+                request.ServiceName = request.ServiceName.Trim().ToLower();
+                query = query.Where(x => x.Service.Name.Trim().ToLower().Contains(request.ServiceName));
+            }
+
+            var count = await query.CountAsync();
+
+            var result = await query
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
                 .Select(x => new GetOrderResponse
                 {
                     Id = x.Id,
@@ -80,7 +113,50 @@ namespace Application.Services.OrderService
                     CreatedTime = x.CreatedTime
                 }).ToListAsync();
 
-            return query;
+            return new PaginationResponse<GetOrderResponse>
+            {
+                Items = result,
+                Count = count
+            };
+        }
+
+        public async Task<PaginationResponse<GetOrderResponse>> GetServiceProviderOrders(GetClientUserOrderRequest request)
+        {
+            var query = _orderRepo.GetAll()
+                .OrderByDescending(x => x.CreatedTime)
+                .Include(x => x.Service)
+                .ThenInclude(x => x.ServiceProvider)
+                .ThenInclude(x => x.User)
+                .Where(x => x.ServiceProviderId == _currentUserService.ServiceProviderId.Value);
+
+            if (!string.IsNullOrEmpty(request.ServiceName))
+            {
+                request.ServiceName = request.ServiceName.Trim().ToLower();
+                query = query.Where(x => x.Service.Name.Trim().ToLower().Contains(request.ServiceName));
+            }
+
+            var count = await query.CountAsync();
+
+            var result = await query
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetOrderResponse
+                {
+                    Id = x.Id,
+                    ServiceName = x.Service.Name,
+                    ServiceProviderName = x.Service.ServiceProvider.User.Name,
+                    FromTime = x.FromTime,
+                    ToTime = x.ToTime,
+                    Note = x.Note,
+                    Status = x.Status.ToString(),
+                    CreatedTime = x.CreatedTime
+                }).ToListAsync();
+
+            return new PaginationResponse<GetOrderResponse>
+            {
+                Items = result,
+                Count = count
+            };
         }
 
         public async Task UpdateOrderStatus(UpdateOrderStatusRequest request)

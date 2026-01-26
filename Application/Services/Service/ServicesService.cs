@@ -1,6 +1,7 @@
 ﻿using Application.Generic_DTOs;
 using Application.Repositories;
 using Application.Services.CurrentUserService;
+using Application.Services.FileService;
 using Application.Services.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace Application.Services.Service
     {
         private readonly IGenericRepository<Domain.Entittes.Service> _serviceRepo;
         private readonly ICurrentUserService _currentUserService;
-        public ServicesService(IGenericRepository<Domain.Entittes.Service> serviceRepo, ICurrentUserService currentUserService)
+        private readonly IFileService _fileService;
+        public ServicesService(IGenericRepository<Domain.Entittes.Service> serviceRepo, ICurrentUserService currentUserService, IFileService fileService)
         {
             _serviceRepo = serviceRepo;
             _currentUserService = currentUserService;
+            _fileService = fileService;
         }
 
         public async Task CreateService(SaveServiceRequest request)
@@ -24,7 +27,8 @@ namespace Application.Services.Service
                 ServiceProviderId = _currentUserService.ServiceProviderId.Value,
                 Duration = request.Duration,
                 Price = request.Price,
-                Description = request.Description
+                Description = request.Description,
+                Image = await _fileService.SaveFileAsync(request.Image, "Services")
             };
 
             await _serviceRepo.InsertAsync(service);
@@ -40,6 +44,7 @@ namespace Application.Services.Service
                 throw new Exception("Service not exist");
             }
 
+            _fileService.DeleteFile(service.Image);
             _serviceRepo.Delete(service);
             await _serviceRepo.SaveChangesAsync();
         }
@@ -49,20 +54,22 @@ namespace Application.Services.Service
             var serviceProviderId = _currentUserService.ServiceProviderId.Value;
 
             var qurey = _serviceRepo.GetAll().OrderByDescending(x => x.Id)
-                .Where(x => x.ServiceProviderId == serviceProviderId)
-                .Skip(request.PageSize * request.PageIndex)
-                .Take(request.PageSize);
+                .Where(x => x.ServiceProviderId == serviceProviderId);
 
             var count = await qurey.CountAsync();
 
-            var result = await qurey.Select(x => new GetServicesResponse
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Description = x.Description,
-                Duration = x.Duration,
-                Price = x.Price
-            }).ToListAsync();
+            var result = await qurey
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetServicesResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Duration = x.Duration,
+                    Price = x.Price,
+                    Image = x.Image
+                }).ToListAsync();
 
             return new PaginationResponse<GetServicesResponse>
             {
@@ -79,6 +86,18 @@ namespace Application.Services.Service
             service.Price = request.Price;
             service.Description = request.Description;
             service.Duration = request.Duration;
+
+            if (request.DeleteImage)
+            {
+                _fileService.DeleteFile(service.Image);
+                service.Image = null;
+            }
+
+            if (request.Image != null)
+            {
+                _fileService.DeleteFile(service.Image);
+                service.Image = await _fileService.SaveFileAsync(request.Image, "Services");
+            }
 
             _serviceRepo.Update(service);
             await _serviceRepo.SaveChangesAsync();

@@ -5,7 +5,7 @@ namespace Application.Services.NotificationService
 {
     public interface INotificationService
     {
-        Task CreateNotification(CreateNotificationRequest request);
+        Task SendNotification(CreateNotificationRequest request);
         Task UpdateIsReaded(int notificationId);
         Task UpdateAllIsReaded();
         Task<PaginationResponse<GetNotificationResponse>> GetUserNotifications(PaginationRequest request);

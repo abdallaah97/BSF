@@ -48,5 +48,12 @@ namespace BSF.Controllers
             return Ok();
         }
 
+        [HttpPost("RegisterFirbaseToken")]
+        public async Task<IActionResult> RegisterFirbaseToken([FromBody]RegisterFirebaseTokenRequest request)
+        {
+            await _authService.RegisterFirbaseToken(request);
+            return Ok();
+        }
+
     }
 }

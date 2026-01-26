@@ -16,6 +16,7 @@ namespace Domain.Entittes
         public string PhonNumber { get; set; }
         [Required]
         public string Password { get; set; }
+        public string? PersonalPhoto { get; set; }
         public int RoleId { get; set; }
         public Role Role { get; set; }
     }

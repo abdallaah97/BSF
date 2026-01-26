@@ -48,5 +48,6 @@ namespace Infrastructre.Context
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Chat> Chats { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<FirebaseToken> FirebaseTokens { get; set; }
     }
 }

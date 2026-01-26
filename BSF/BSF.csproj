@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+	  <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.11" />
+	  <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,6 +23,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Infrastructre\Infrastructre.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

@@ -7,7 +7,6 @@
         public string Description { get; set; }
         public int Duration { get; set; }
         public decimal Price { get; set; }
-        public DateTime? AvailableFrom { get; set; }
-        public DateTime? AvailableTo { get; set; }
+        public string? Image { get; set; }
     }
 }

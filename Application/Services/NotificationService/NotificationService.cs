@@ -1,6 +1,8 @@
 ﻿using Application.Generic_DTOs;
 using Application.Repositories;
 using Application.Services.CurrentUserService;
+using Application.Services.FirebaseService;
+using Application.Services.FirebaseService.DTOs;
 using Application.Services.NotificationService.DTOs;
 using Domain.Entittes;
 using Microsoft.EntityFrameworkCore;
@@ -10,14 +12,18 @@ namespace Application.Services.NotificationService
     public class NotificationService : INotificationService
     {
         private readonly IGenericRepository<Notification> _notificationRepo;
+        private readonly IGenericRepository<FirebaseToken> _firebaseTokenRepo;
         private readonly ICurrentUserService _currentUserService;
-        public NotificationService(IGenericRepository<Notification> notificationRepo, ICurrentUserService currentUserService)
+        private readonly IFirebaseService _firebaseService;
+        public NotificationService(IGenericRepository<Notification> notificationRepo, ICurrentUserService currentUserService, IGenericRepository<FirebaseToken> firebaseTokenRepo, IFirebaseService firebaseService)
         {
             _notificationRepo = notificationRepo;
             _currentUserService = currentUserService;
+            _firebaseService = firebaseService;
+            _firebaseTokenRepo = firebaseTokenRepo;
         }
 
-        public async Task CreateNotification(CreateNotificationRequest request)
+        public async Task SendNotification(CreateNotificationRequest request)
         {
             var notification = new Notification
             {
@@ -31,6 +37,23 @@ namespace Application.Services.NotificationService
 
             await _notificationRepo.InsertAsync(notification);
             await _notificationRepo.SaveChangesAsync();
+
+
+            var tokens = await _firebaseTokenRepo.GetAll()
+                .Where(x => x.UserId == request.UserId)
+                .Select(x => x.Token)
+                .ToListAsync();
+
+            await _firebaseService.SendAsync(new List<SendFirebaseRequest>
+             {
+                 new SendFirebaseRequest
+                 {
+                     Tokens = tokens,
+                     Title = request.Title,
+                     Body =  request.Message,
+                     Data = request.Data
+                 }
+             });
         }
 
         public async Task UpdateIsReaded(int notificationId)
@@ -61,11 +84,12 @@ namespace Application.Services.NotificationService
             var userId = _currentUserService.UserId.Value;
 
             var qurey = _notificationRepo.GetAll().OrderByDescending(x => x.CreatedData)
-                .Where(x => x.UserId == userId)
-                .Skip(request.PageSize * request.PageIndex)
-                .Take(request.PageSize);
+                .Where(x => x.UserId == userId);
 
             var count = await qurey.CountAsync();
+
+            qurey = qurey.Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize);
 
             var result = await qurey.Select(x => new GetNotificationResponse
             {

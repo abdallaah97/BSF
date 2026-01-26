@@ -1,16 +1,24 @@
+using Application.Hubs;
+using Application.Managers.Chat;
 using Application.Repositories;
 using Application.Services.AuthService;
 using Application.Services.ChatService;
 using Application.Services.ClientUserService;
 using Application.Services.CurrentUserService;
+using Application.Services.FileService;
+using Application.Services.FirebaseService;
 using Application.Services.LookupService;
 using Application.Services.NotificationService;
+using Application.Services.OrderService;
 using Application.Services.Service;
 using Application.Services.ServiceProviderService;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Infrastructre.Context;
 using Infrastructre.Data;
 using Infrastructre.Repositories;
 using Infrastructre.Services.CurrentUserService;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -26,6 +34,12 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<BSFContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
 );
+
+var firebasePath = Path.Combine(AppContext.BaseDirectory, "Firebase", "bsfapp-12dd8-firebase-adminsdk-fbsvc-ab7f17b10d.json");
+var firebaseApp = FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile(firebasePath)
+});
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -78,6 +92,8 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(securityReq);
 });
 
+builder.Services.AddSignalR();
+
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IAuthService), typeof(AuthService));
 builder.Services.AddScoped(typeof(ICurrentUserService), typeof(CurrentUserService));
@@ -85,8 +101,12 @@ builder.Services.AddScoped(typeof(IServiceProviderService), typeof(ServiceProvid
 builder.Services.AddScoped(typeof(IClientUserService), typeof(ClientUserService));
 builder.Services.AddScoped(typeof(ILookupService), typeof(LookupService));
 builder.Services.AddScoped(typeof(IServicesService), typeof(ServicesService));
+builder.Services.AddScoped(typeof(IOrderService), typeof(OrderService));
 builder.Services.AddScoped(typeof(INotificationService), typeof(NotificationService));
 builder.Services.AddScoped(typeof(IChatService), typeof(ChatService));
+builder.Services.AddScoped(typeof(IChatConnectionManager), typeof(ChatConnectionManager));
+builder.Services.AddScoped(typeof(IFileService), typeof(FileService));
+builder.Services.AddScoped(typeof(IFirebaseService), typeof(FirebaseService));
 
 var app = builder.Build();
 
@@ -96,9 +116,11 @@ UserSeedDate.UserSeed(app.Services);
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
+
 
 app.Run();

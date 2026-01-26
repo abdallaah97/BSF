@@ -4,6 +4,7 @@ using Infrastructre.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructre.Migrations
 {
     [DbContext(typeof(BSFContext))]
-    partial class BSFContextModelSnapshot : ModelSnapshot
+    [Migration("20260124141304_AddUserAndServiceImages")]
+    partial class AddUserAndServiceImages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,28 +108,6 @@ namespace Infrastructre.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ClientUsers");
-                });
-
-            modelBuilder.Entity("Domain.Entittes.FirebaseToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FirebaseTokens");
                 });
 
             modelBuilder.Entity("Domain.Entittes.Notification", b =>
@@ -485,17 +466,6 @@ namespace Infrastructre.Migrations
                 });
 
             modelBuilder.Entity("Domain.Entittes.ClientUser", b =>
-                {
-                    b.HasOne("Domain.Entittes.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entittes.FirebaseToken", b =>
                 {
                     b.HasOne("Domain.Entittes.User", "User")
                         .WithMany()
