@@ -5,6 +5,7 @@ using Application.Services.AuthService;
 using Application.Services.ChatService;
 using Application.Services.ClientUserService;
 using Application.Services.CurrentUserService;
+using Application.Services.DashboardService;
 using Application.Services.FileService;
 using Application.Services.FirebaseService;
 using Application.Services.LookupService;
@@ -12,6 +13,7 @@ using Application.Services.NotificationService;
 using Application.Services.OrderService;
 using Application.Services.Service;
 using Application.Services.ServiceProviderService;
+using Application.Services.DashboardService;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Infrastructre.Context;
@@ -24,6 +26,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +48,8 @@ var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -54,7 +59,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtSection["Issuer"],
             ValidAudience = jwtSection["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"])),
-
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
@@ -107,8 +114,22 @@ builder.Services.AddScoped(typeof(IChatService), typeof(ChatService));
 builder.Services.AddScoped(typeof(IChatConnectionManager), typeof(ChatConnectionManager));
 builder.Services.AddScoped(typeof(IFileService), typeof(FileService));
 builder.Services.AddScoped(typeof(IFirebaseService), typeof(FirebaseService));
+builder.Services.AddScoped(typeof(IDashboardService), typeof(DashboardService));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 UserSeedDate.UserSeed(app.Services);
 
@@ -117,6 +138,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

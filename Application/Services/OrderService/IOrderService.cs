@@ -9,6 +9,7 @@ namespace Application.Services.OrderService
         Task RequestOrder(SaveOrderRequest request);
         Task<PaginationResponse<GetOrderResponse>> GetClientUserOrders(GetClientUserOrderRequest request);
         Task<PaginationResponse<GetOrderResponse>> GetServiceProviderOrders(GetClientUserOrderRequest request);
+        Task<PaginationResponse<GetOrderResponse>> GetAllOrders(GetClientUserOrderRequest request);
         Task UpdateOrderStatus(UpdateOrderStatusRequest request);
         Task DeleteOrder(int orderId);
     }

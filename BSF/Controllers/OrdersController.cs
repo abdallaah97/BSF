@@ -48,6 +48,14 @@ namespace BSF.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("GetAllOrders")]
+        public async Task<IActionResult> GetAllOrders([FromBody] GetClientUserOrderRequest request)
+        {
+            var response = await _orderService.GetAllOrders(request);
+            return Ok(response);
+        }
+
         [Authorize(Roles = $"User")]
         [HttpPost("DeleteOrder")]
         public async Task<IActionResult> DeleteOrder(int orderId)

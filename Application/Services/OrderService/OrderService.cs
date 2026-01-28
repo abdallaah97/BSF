@@ -96,6 +96,12 @@ namespace Application.Services.OrderService
                 query = query.Where(x => x.Service.Name.Trim().ToLower().Contains(request.ServiceName));
             }
 
+            if (!string.IsNullOrEmpty(request.ServiceProviderName))
+            {
+                request.ServiceProviderName = request.ServiceProviderName.Trim().ToLower();
+                query = query.Where(x => x.Service.ServiceProvider.User.Name.Trim().ToLower().Contains(request.ServiceProviderName));
+            }
+
             var count = await query.CountAsync();
 
             var result = await query
@@ -133,6 +139,51 @@ namespace Application.Services.OrderService
             {
                 request.ServiceName = request.ServiceName.Trim().ToLower();
                 query = query.Where(x => x.Service.Name.Trim().ToLower().Contains(request.ServiceName));
+            }
+
+
+            var count = await query.CountAsync();
+
+            var result = await query
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetOrderResponse
+                {
+                    Id = x.Id,
+                    ServiceName = x.Service.Name,
+                    ServiceProviderName = x.Service.ServiceProvider.User.Name,
+                    FromTime = x.FromTime,
+                    ToTime = x.ToTime,
+                    Note = x.Note,
+                    Status = x.Status.ToString(),
+                    CreatedTime = x.CreatedTime
+                }).ToListAsync();
+
+            return new PaginationResponse<GetOrderResponse>
+            {
+                Items = result,
+                Count = count
+            };
+        }
+
+        public async Task<PaginationResponse<GetOrderResponse>> GetAllOrders(GetClientUserOrderRequest request)
+        {
+            var query = _orderRepo.GetAll()
+                .OrderByDescending(x => x.CreatedTime)
+                .Include(x => x.Service)
+                .ThenInclude(x => x.ServiceProvider)
+                .ThenInclude(x => x.User).AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.ServiceName))
+            {
+                request.ServiceName = request.ServiceName.Trim().ToLower();
+                query = query.Where(x => x.Service.Name.Trim().ToLower().Contains(request.ServiceName));
+            }
+
+            if (!string.IsNullOrEmpty(request.ServiceProviderName))
+            {
+                request.ServiceProviderName = request.ServiceProviderName.Trim().ToLower();
+                query = query.Where(x => x.Service.ServiceProvider.User.Name.Trim().ToLower().Contains(request.ServiceProviderName));
             }
 
             var count = await query.CountAsync();
