@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Bookings | BSF</title>
+    <title>Manage Services | BSF</title>
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link
@@ -26,10 +26,12 @@
                     </div>
                     <nav class="nav flex-column">
                         <a class="nav-link" href="dashboard.html"><i class="fas fa-chart-pie"></i> Dashboard</a>
-                        <a class="nav-link active" href="bookings.html"><i class="fas fa-calendar-day"></i> Bookings</a>
-                        <a class="nav-link" href="services.html"><i class="fas fa-concierge-bell"></i> Services</a>
+                        <a class="nav-link" href="bookings.html"><i class="fas fa-calendar-day"></i> Bookings</a>
+                        <a class="nav-link active" href="services.html"><i class="fas fa-concierge-bell"></i>
+                            Services</a>
                         <a class="nav-link" href="providers.html"><i class="fas fa-building"></i> Providers</a>
-                        <a class="nav-link" href="customers.html"><i class="fas fa-user-group"></i> Customers</a>
+                        <a class="nav-link" href="customers.html"><i class="fas fa-user-group"></i>
+                            Customers</a>
                         <hr class="my-4 border-light opacity-50">
                         <a class="nav-link text-danger mt-auto" href="#" onclick="AuthService.logout()">
                             <i class="fas fa-power-off"></i> Sign Out
@@ -42,8 +44,8 @@
             <div class="col-md-10">
                 <header class="content-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="fw-bold mb-0">Booking Management</h5>
-                        <p class="text-muted text-xs mb-0">View and filter all system orders</p>
+                        <h5 class="fw-bold mb-0">Service Management</h5>
+                        <p class="text-muted text-xs mb-0">Overview of all services in the system</p>
                     </div>
 
                     <div class="user-badge shadow-sm bg-white">
@@ -57,52 +59,36 @@
                 </header>
 
                 <main class="dashboard-container">
-                    <!-- Filters -->
+                    <!-- Filters & Actions -->
                     <div class="stat-box border-0 mb-4">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label text-xs fw-bold text-uppercase text-muted">Service Name</label>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-12">
+                                <label class="form-label text-xs fw-bold text-uppercase text-muted">Search
+                                    Services</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0"><i
                                             class="fas fa-search text-muted small"></i></span>
-                                    <input type="text" id="filterService" class="form-control border-start-0"
-                                        placeholder="Filter by service...">
+                                    <input type="text" id="searchTerm" class="form-control border-start-0"
+                                        placeholder="Search by name or description...">
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-xs fw-bold text-uppercase text-muted">Provider
-                                    Name</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0"><i
-                                            class="fas fa-user text-muted small"></i></span>
-                                    <input type="text" id="filterProvider" class="form-control border-start-0"
-                                        placeholder="Filter by provider...">
-                                </div>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button class="btn btn-primary w-100" onclick="resetFilters()">
-                                    <i class="fas fa-sync-alt me-2"></i> Reset Filters
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bookings Table -->
+                    <!-- Services Table -->
                     <div class="table-card overflow-hidden mt-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th>OrderID</th>
-                                        <th>Customer</th>
                                         <th>Service</th>
                                         <th>Provider</th>
-                                        <th>Schedule</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Actions</th>
+                                        <th>Description</th>
+                                        <th>Duration</th>
+                                        <th class="text-end">Price</th>
                                     </tr>
                                 </thead>
-                                <tbody id="bookingsTableBody">
+                                <tbody id="servicesTableBody">
                                     <!-- Dynamic Content -->
                                 </tbody>
                             </table>
@@ -110,7 +96,7 @@
 
                         <!-- Pagination -->
                         <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
-                            <span class="text-muted text-xs" id="paginationInfo">Showing 0 of 0 orders</span>
+                            <span class="text-muted text-xs" id="paginationInfo">Showing 0 of 0 services</span>
                             <nav>
                                 <ul class="pagination pagination-sm mb-0" id="paginationControls">
                                     <!-- Dynamic Pagination -->
@@ -123,15 +109,14 @@
         </div>
     </div>
 
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/auth.js"></script>
     <script>
         let currentPage = 0;
         const pageSize = 8;
-        let filters = {
-            service: '',
-            provider: ''
-        };
+        let searchTerm = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = AuthService.getUser();
@@ -139,78 +124,84 @@
                 document.getElementById('displayName').innerText = user.name;
             }
 
-            // Keyboard debouncing for filters
+            // Keyboard debouncing for search
             let timeout = null;
-            document.getElementById('filterService').addEventListener('input', (e) => {
+            document.getElementById('searchTerm').addEventListener('input', (e) => {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => {
-                    filters.service = e.target.value;
+                    searchTerm = e.target.value;
                     currentPage = 0;
-                    loadBookings();
+                    loadServices();
                 }, 500);
             });
 
-            document.getElementById('filterProvider').addEventListener('input', (e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    filters.provider = e.target.value;
-                    currentPage = 0;
-                    loadBookings();
-                }, 500);
-            });
-
-            loadBookings();
+            loadServices();
         });
 
-        async function loadBookings() {
-            const body = document.getElementById('bookingsTableBody');
-            body.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr>';
+        async function loadServices() {
+            const body = document.getElementById('servicesTableBody');
+            body.innerHTML = '<tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr>';
 
             try {
-                const response = await AuthService.fetchWithAuth(`${BASE_URL}/Orders/GetAllOrders`, {
+                const response = await AuthService.fetchWithAuth(`${BASE_URL}/Services/GetAllServices`, {
                     method: 'POST',
                     body: JSON.stringify({
                         pageIndex: currentPage,
                         pageSize: pageSize,
-                        serviceName: filters.service,
-                        serviceProviderName: filters.provider
+                        searchTerm: searchTerm
                     })
                 });
 
-                if (!response.ok) throw new Error('Failed to load data');
+                if (!response.ok) throw new Error('Failed to load services');
                 const data = await response.json();
 
                 renderTable(data.items);
                 renderPagination(data.count);
 
-                document.getElementById('paginationInfo').innerText = `Showing ${data.items.length} of ${data.count} orders`;
+                document.getElementById('paginationInfo').innerText = `Showing ${data.items.length} of ${data.count} services`;
             } catch (error) {
-                body.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-danger">Error loading bookings</td></tr>';
+                console.error(error);
+                body.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-danger">Error loading services. Make sure you are logged in as an Administrator.</td></tr>';
             }
         }
 
         function renderTable(items) {
-            const body = document.getElementById('bookingsTableBody');
+            const body = document.getElementById('servicesTableBody');
             body.innerHTML = '';
 
             if (items.length === 0) {
-                body.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No bookings found matching filters</td></tr>';
+                body.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No services found</td></tr>';
                 return;
             }
 
             items.forEach(item => {
-                const date = new Date(item.createdTime).toLocaleDateString();
-                const statusClass = getStatusBadge(item.status);
+                const imageUrl = item.image ? `${BASE_URL.replace('/api', '')}/${item.image.replace(/\\/g, '/')}` : 'https://placehold.co/40x40?text=S';
                 body.innerHTML += `
                     <tr>
-                        <td class="fw-bold text-muted text-xs">#RD-${item.id}</td>
-                        <td><span class="fw-500">${item.clientName || 'Market Customer'}</span></td>
-                        <td>${item.serviceName}</td>
-                        <td class="small">${item.serviceProviderName}</td>
-                        <td class="text-muted text-xs">${date}</td>
-                        <td><span class="badge-status ${statusClass}">${item.status}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="${imageUrl}" class="rounded-2 me-3" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.src='https://placehold.co/40x40?text=S'">
+                                <div>
+                                    <div class="fw-bold text-dark">${item.name}</div>
+                                    <div class="text-muted text-xs">ID: SER-${item.id}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">${item.serviceProviderName}</div>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" title="${item.description}">
+                                ${item.description || '<span class="text-muted fst-italic">No description</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark fw-normal border">
+                                <i class="far fa-clock me-1 text-primary"></i> ${item.duration} hrs
+                            </span>
+                        </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-light border p-1 rounded-2"><i class="fas fa-ellipsis-h text-muted px-1"></i></button>
+                            <div class="fw-bold text-main">${item.price.toFixed(2)} JOD</div>
                         </td>
                     </tr>
                 `;
@@ -231,6 +222,7 @@
                 </li>
             `;
 
+            // Page numbers
             for (let i = 0; i < totalPages; i++) {
                 container.innerHTML += `
                     <li class="page-item ${currentPage === i ? 'active' : ''}">
@@ -249,25 +241,12 @@
 
         function changePage(page) {
             if (page < 0) return;
+            const totalCount = parseInt(document.getElementById('paginationInfo').innerText.split(' of ')[1]);
+            const totalPages = Math.ceil(totalCount / pageSize);
+            if (page >= totalPages) return;
+
             currentPage = page;
-            loadBookings();
-        }
-
-        function resetFilters() {
-            document.getElementById('filterService').value = '';
-            document.getElementById('filterProvider').value = '';
-            filters = { service: '', provider: '' };
-            currentPage = 0;
-            loadBookings();
-        }
-
-        function getStatusBadge(status) {
-            switch (status.toLowerCase()) {
-                case 'pending': return 'bg-pending';
-                case 'completed': return 'bg-completed';
-                case 'cancelled': return 'bg-cancelled';
-                default: return 'bg-light';
-            }
+            loadServices();
         }
     </script>
 </body>

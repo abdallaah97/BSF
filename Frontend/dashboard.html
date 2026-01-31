@@ -26,13 +26,12 @@
                     </div>
 
                     <nav class="nav flex-column">
-                        <a class="nav-link active" href="dashboard.html"><i class="fas fa-grid-2"></i> Dashboard</a>
+                        <a class="nav-link active" href="dashboard.html"><i class="fas fa-chart-pie"></i> Dashboard</a>
                         <a class="nav-link" href="bookings.html"><i class="fas fa-calendar-day"></i> Bookings</a>
-                        <a class="nav-link" href="#"><i class="fas fa-concierge-bell"></i> Services</a>
-                        <a class="nav-link" href="#"><i class="fas fa-building"></i> Providers</a>
-                        <a class="nav-link" href="#"><i class="fas fa-user-group"></i> Customers</a>
+                        <a class="nav-link" href="services.html"><i class="fas fa-concierge-bell"></i> Services</a>
+                        <a class="nav-link" href="providers.html"><i class="fas fa-building"></i> Providers</a>
+                        <a class="nav-link" href="customers.html"><i class="fas fa-user-group"></i> Customers</a>
                         <hr class="my-4 border-light opacity-50">
-                        <a class="nav-link" href="#"><i class="fas fa-gear"></i> Settings</a>
                         <a class="nav-link text-danger mt-auto" href="#" onclick="AuthService.logout()">
                             <i class="fas fa-power-off"></i> Sign Out
                         </a>
@@ -162,7 +161,7 @@
             try {
                 const response = await AuthService.fetchWithAuth(`${BASE_URL}/Dashboard/Stats`);
                 if (!response.ok) throw new Error('API server unreachable');
-debugger;
+                debugger;
                 const stats = await response.json();
 
                 document.getElementById('statTotalOrders').innerText = stats.totalOrders;

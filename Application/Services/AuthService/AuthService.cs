@@ -184,5 +184,20 @@ namespace Application.Services.AuthService
                 await _firebaseTokenRepository.SaveChangesAsync();
             }
         }
+
+        public async Task ResetUserPasswordByAdmin(ResetUserPasswordRequest request)
+        {
+            var user = await _userRepository.GetByIdAsync(request.UserId);
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            var passwordHasher = new PasswordHasher<User>();
+            user.Password = passwordHasher.HashPassword(user, request.NewPassword);
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+        }
     }
 }

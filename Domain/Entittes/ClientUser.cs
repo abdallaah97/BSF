@@ -6,5 +6,6 @@
         public DateTime BarthDate { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public ICollection<Order> Orders { get; set; }
     }
 }

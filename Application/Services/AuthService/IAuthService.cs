@@ -8,5 +8,6 @@ namespace Application.Services.AuthService
         Task<string> GenerateNewAccessToken(string refreshToken);
         Task ChangeMyPassword(ChangeMyPasswordRequest request);
         Task RegisterFirbaseToken(RegisterFirebaseTokenRequest request);
+        Task ResetUserPasswordByAdmin(ResetUserPasswordRequest request);
     }
 }

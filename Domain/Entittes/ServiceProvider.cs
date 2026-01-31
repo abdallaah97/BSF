@@ -8,5 +8,7 @@
         public int UserId { get; set; }
         public User User { get; set; }
         public bool IsAvailable { get; set; }
+        public ICollection<Order> Orders { get; set; }
+        public ICollection<Service> Services { get; set; }
     }
 }

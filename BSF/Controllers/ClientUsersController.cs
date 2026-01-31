@@ -38,5 +38,13 @@ namespace BSF.Controllers
             await _clientUserService.UpdateClientUserAccount(request);
             return Ok();
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("GetAllClientUsers")]
+        public async Task<IActionResult> GetAllClientUsers([FromBody] GetClientUsersRequest request)
+        {
+            var response = await _clientUserService.GetAllClientUsers(request);
+            return Ok(response);
+        }
     }
 }

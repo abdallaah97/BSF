@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BSF.Controllers
 {
-    [Authorize(Roles = "ServiceProvider")]
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ServicesController : ControllerBase
     {
         private readonly IServicesService _servicesService;
@@ -18,6 +18,7 @@ namespace BSF.Controllers
         }
 
 
+        [Authorize(Roles = "ServiceProvider")]
         [HttpPost("CreateService")]
         public async Task<IActionResult> CreateService([FromForm] SaveServiceRequest request)
         {
@@ -25,6 +26,7 @@ namespace BSF.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "ServiceProvider")]
         [HttpPost("UpdateService")]
         public async Task<IActionResult> UpdateService(int id, [FromForm] SaveServiceRequest request)
         {
@@ -32,6 +34,7 @@ namespace BSF.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "ServiceProvider")]
         [HttpDelete("DeleteService")]
         public async Task<IActionResult> DeleteService(int id)
         {
@@ -39,6 +42,8 @@ namespace BSF.Controllers
             return Ok();
         }
 
+
+        [Authorize(Roles = "ServiceProvider")]
         [HttpPost("GetMyServices")]
         public async Task<IActionResult> GetMyServices([FromBody] PaginationRequest request)
         {
@@ -46,5 +51,12 @@ namespace BSF.Controllers
             return Ok(response);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("GetAllServices")]
+        public async Task<IActionResult> GetAllServices([FromBody] GetServicesRequest request)
+        {
+            var response = await _servicesService.GetAllServices(request);
+            return Ok(response);
+        }
     }
 }

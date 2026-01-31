@@ -55,5 +55,13 @@ namespace BSF.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("ResetUserPasswordByAdmin")]
+        public async Task<IActionResult> ResetUserPasswordByAdmin([FromBody] ResetUserPasswordRequest request)
+        {
+            await _authService.ResetUserPasswordByAdmin(request);
+            return Ok();
+        }
+
     }
 }

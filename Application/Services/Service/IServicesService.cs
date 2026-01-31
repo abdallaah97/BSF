@@ -6,6 +6,7 @@ namespace Application.Services.Service
     public interface IServicesService
     {
         Task<PaginationResponse<GetServicesResponse>> GetMyServices(PaginationRequest request);
+        Task<PaginationResponse<GetServicesResponse>> GetAllServices(GetServicesRequest request);
         Task CreateService(SaveServiceRequest request);
         Task UpdateService(int id, SaveServiceRequest request);
         Task DeleteService(int id);

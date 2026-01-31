@@ -38,5 +38,13 @@ namespace BSF.Controllers
             await _serviceProviderService.UpdateServiceProviderAccount(request);
             return Ok();
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("GetAllServiceProviders")]
+        public async Task<IActionResult> GetAllServiceProviders([FromBody] GetServiceProvidersRequest request)
+        {
+            var response = await _serviceProviderService.GetAllServiceProviders(request);
+            return Ok(response);
+        }
     }
 }

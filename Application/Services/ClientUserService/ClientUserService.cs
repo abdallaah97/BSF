@@ -1,4 +1,5 @@
-﻿using Application.Repositories;
+﻿using Application.Generic_DTOs;
+using Application.Repositories;
 using Application.Services.ClientUserService.DTOs;
 using Application.Services.CurrentUserService;
 using Application.Services.FileService;
@@ -16,13 +17,15 @@ namespace Application.Services.ClientUserService
         private readonly IGenericRepository<Role> _roleRepo;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
-        public ClientUserService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, IGenericRepository<ClientUser> clientUserRepo, ICurrentUserService currentUserService, IFileService fileService)
+        private readonly IGenericRepository<Order> _orderRepo;
+        public ClientUserService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, IGenericRepository<ClientUser> clientUserRepo, ICurrentUserService currentUserService, IFileService fileService, IGenericRepository<Order> orderRepo)
         {
             _clientUserRepo = clientUserRepo;
             _userRepo = userRepo;
             _roleRepo = roleRepo;
             _currentUserService = currentUserService;
             _fileService = fileService;
+            _orderRepo = orderRepo;
         }
 
         public async Task ClientUserRegistration(ClientUserRegistrationRequest request)
@@ -71,6 +74,7 @@ namespace Application.Services.ClientUserService
             var response = new GetClientUserAccountResponse
             {
                 Id = clientUser.Id,
+                UserId = clientUser.UserId,
                 Name = clientUser.User.Name,
                 Email = clientUser.User.Email,
                 PhonNumber = clientUser.User.PhonNumber,
@@ -121,7 +125,42 @@ namespace Application.Services.ClientUserService
             clientUser.BarthDate = request.BirthDate;
             _clientUserRepo.Update(clientUser);
             await _clientUserRepo.SaveChangesAsync();
+        }
 
+        public async Task<PaginationResponse<GetClientUserAccountResponse>> GetAllClientUsers(GetClientUsersRequest request)
+        {
+            var query = _clientUserRepo.GetAll()
+                .Include(x => x.User)
+                .Include(x => x.Orders)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.SearchTerm))
+            {
+                query = query.Where(x => x.User.Name.Contains(request.SearchTerm) || x.User.Email.Contains(request.SearchTerm));
+            }
+
+            var count = await query.CountAsync();
+
+            var result = await query.OrderByDescending(x => x.Id)
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetClientUserAccountResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    Name = x.User.Name,
+                    Email = x.User.Email,
+                    PhonNumber = x.User.PhonNumber,
+                    BirthDate = x.BarthDate,
+                    PersonalPhoto = x.User.PersonalPhoto,
+                    OrdersCount = x.Orders.Count()
+                }).ToListAsync();
+
+            return new PaginationResponse<GetClientUserAccountResponse>
+            {
+                Items = result,
+                Count = count
+            };
         }
 
         private async Task RegistrationValidation(ClientUserRegistrationRequest request, int? id = null)

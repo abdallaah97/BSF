@@ -1,4 +1,5 @@
-﻿using Application.Repositories;
+﻿using Application.Generic_DTOs;
+using Application.Repositories;
 using Application.Services.CurrentUserService;
 using Application.Services.FileService;
 using Application.Services.ServiceProviderService.DTOs;
@@ -16,13 +17,17 @@ namespace Application.Services.ServiceProviderService
         private readonly IGenericRepository<Role> _roleRepo;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
-        public ServiceProviderService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, ICurrentUserService currentUserService, IFileService fileService)
+        private readonly IGenericRepository<Domain.Entittes.Service> _serviceRepo;
+        private readonly IGenericRepository<Order> _orderRepo;
+        public ServiceProviderService(IGenericRepository<ServiceProvider> serviceProviderRepo, IGenericRepository<User> userRepo, IGenericRepository<Role> roleRepo, ICurrentUserService currentUserService, IFileService fileService, IGenericRepository<Domain.Entittes.Service> serviceRepo, IGenericRepository<Order> orderRepo)
         {
             _serviceProviderRepo = serviceProviderRepo;
             _userRepo = userRepo;
             _roleRepo = roleRepo;
             _currentUserService = currentUserService;
             _fileService = fileService;
+            _serviceRepo = serviceRepo;
+            _orderRepo = orderRepo;
         }
 
         public async Task<GetServiceProviderAccountResponse> GetServiceProviderAccount()
@@ -41,6 +46,7 @@ namespace Application.Services.ServiceProviderService
             var response = new GetServiceProviderAccountResponse
             {
                 Id = serviceProvider.Id,
+                UserId = serviceProvider.UserId,
                 Name = serviceProvider.User.Name,
                 Email = serviceProvider.User.Email,
                 PhoneNumber = serviceProvider.User.PhonNumber,
@@ -128,7 +134,44 @@ namespace Application.Services.ServiceProviderService
             await _serviceProviderRepo.SaveChangesAsync();
 
         }
+        public async Task<PaginationResponse<GetServiceProviderAccountResponse>> GetAllServiceProviders(GetServiceProvidersRequest request)
+        {
+            var query = _serviceProviderRepo.GetAll()
+                .Include(x => x.User)
+                .Include(x => x.Orders)
+                .Include(x => x.Services)
+                .AsQueryable();
 
+            if (!string.IsNullOrEmpty(request.SearchTerm))
+            {
+                query = query.Where(x => x.User.Name.Trim().ToLower().Contains(request.SearchTerm.Trim().ToLower()) || x.User.Email.Trim().ToLower().Contains(request.SearchTerm.Trim().ToLower()));
+            }
+
+            var count = await query.CountAsync();
+
+            var result = await query.OrderByDescending(x => x.Id)
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetServiceProviderAccountResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    Name = x.User.Name,
+                    Email = x.User.Email,
+                    PhoneNumber = x.User.PhonNumber,
+                    ServiceCategoryId = x.ServiceCategoryId,
+                    IsAvailable = x.IsAvailable,
+                    PersonalPhoto = x.User.PersonalPhoto,
+                    ServicesCount = x.Services.Count(),
+                    CompletedOrdersCount = x.Orders.Count(o => o.Status == OrderStatus.Completed)
+                }).ToListAsync();
+
+            return new PaginationResponse<GetServiceProviderAccountResponse>
+            {
+                Items = result,
+                Count = count
+            };
+        }
 
         private async Task RegistrationValidation(ServiceProviderRegistrationRequest request, int? userId = null)
         {

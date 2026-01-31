@@ -78,6 +78,40 @@ namespace Application.Services.Service
             };
         }
 
+        public async Task<PaginationResponse<GetServicesResponse>> GetAllServices(GetServicesRequest request)
+        {
+            var qurey = _serviceRepo.GetAll()
+                .Include(x => x.ServiceProvider)
+                .ThenInclude(x => x.User).AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.SearchTerm))
+            {
+                qurey = qurey.Where(x => x.Name.Contains(request.SearchTerm) || x.Description.Contains(request.SearchTerm));
+            }
+
+            var count = await qurey.CountAsync();
+
+            var result = await qurey.OrderByDescending(x => x.Id)
+                .Skip(request.PageSize * request.PageIndex)
+                .Take(request.PageSize)
+                .Select(x => new GetServicesResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Duration = x.Duration,
+                    Price = x.Price,
+                    Image = x.Image,
+                    ServiceProviderName = x.ServiceProvider.User.Name
+                }).ToListAsync();
+
+            return new PaginationResponse<GetServicesResponse>
+            {
+                Items = result,
+                Count = count
+            };
+        }
+
         public async Task UpdateService(int id, SaveServiceRequest request)
         {
             var service = await _serviceRepo.GetByIdAsync(id);
