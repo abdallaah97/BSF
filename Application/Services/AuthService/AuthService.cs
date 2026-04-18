@@ -35,7 +35,6 @@ namespace Application.Services.AuthService
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            // Eager loading
             var user = await _userRepository.GetAll()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == request.Username.Trim().ToLower() || u.PhonNumber == request.Username.Trim());
